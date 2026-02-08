@@ -9,7 +9,7 @@ export default [
   {files: ["./src/**/*.{ts,tsx}"]},
   {languageOptions: { globals: globals.browser }},
   pluginJs.configs.recommended,
-  ...tseslint.configs.recommended,
+  ...tseslint.configs.strict,
   pluginReact.configs.flat.recommended,
   {
     settings: {
@@ -18,7 +18,18 @@ export default [
       }
     },
     rules: {
-      "react/react-in-jsx-scope": "off"
+      "react/react-in-jsx-scope": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_",
+          "caughtErrorsIgnorePattern": "^_"
+        }
+      ]
     }
+  },
+  {
+    ignores: ["dist/**", "node_modules/**"]
   }
 ];
