@@ -15,7 +15,26 @@
   },
   "devDependencies": {},
   "workspaces": [
-    "lib-openai/",
-    "cli-openai/"
-  ]
+    "api-expressjs-vm",
+    "api-functions-v4-azure-resource-management",
+    "api-inmemory",
+    "app-react-vite",
+    "azure-upload-file-to-storage/*",
+    "quickstarts/ai-agents/*",
+    "quickstarts/ai-search",
+    "quickstarts/azure-openai-assistants/*",
+    "quickstarts/azure-sql/connect-and-query/*",
+    "quickstarts/key-vault",
+    "quickstarts/openai",
+    "quickstarts/service-bus/ts",
+    "quickstarts/storage",
+    "scripts",
+    "sdk/chained-credentials",
+    "test-api-functions-v4",
+    "ts-boilerplate-common",
+    "ts-boilerplate-esm"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  }
 }

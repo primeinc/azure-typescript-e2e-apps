@@ -17,7 +17,7 @@ A monorepo of apps used with the Azure cloud as part of the [Azure Developer Cen
 ## Features
 
 * `.devcontainer`: local proxied react + api using [SWA CLI](https://learn.microsoft.com/en-us/azure/static-web-apps/static-web-apps-cli-configuration)
-* `app-react-vite`: very simple React 18 + Vite app with Azure _easy auth_
+* `app-react-vite`: very simple React 19 + Vite app with Azure _easy auth_
 * `api`: very simple Node.js Azure Functions v4 (new programming model) with `/status` route
 * `api-inmemory`: very simple Node.js Azure Functions v4 (new programming model) with `/status` and in-memory db for `/todo` route
 * `docs`: helpful information about resources
@@ -25,7 +25,7 @@ A monorepo of apps used with the Azure cloud as part of the [Azure Developer Cen
 
 ## Documentation
 
-* React 18 (Vite) + Azure Functions API v4
+* React 19 (Vite) + Azure Functions API v4
 
 ## Naming conventions
 
