@@ -196,7 +196,7 @@ function App() {
           {/* Uploaded Files Display */}
           <Grid container spacing={2}>
             {list.map((item) => (
-              <Grid item xs={6} sm={4} md={3} key={item}>
+              <Grid size={{ xs: 6, sm: 4, md: 3 }} key={item}>
                 <Card>
                   {item.endsWith('.jpg') ||
                   item.endsWith('.png') ||
