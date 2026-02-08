@@ -59,6 +59,7 @@ jobs:
           api_location: "/azure-upload-file-to-storage/api"
           output_location: "dist"
         env:
+          SKIP_DEPLOY_ON_MISSING_SECRETS: true
           VITE_API_SERVER: "" # Handled by SWA proxy in production
 
   close_pull_request_job:
