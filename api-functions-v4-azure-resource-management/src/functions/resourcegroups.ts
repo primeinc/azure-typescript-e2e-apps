@@ -14,7 +14,6 @@ import {
 import { listResourceGroups } from '../lib/azure-resource-groups';
 import { processError } from '../lib/error';
 
-
 export async function resourcegroups(
   request: HttpRequest,
   context: InvocationContext

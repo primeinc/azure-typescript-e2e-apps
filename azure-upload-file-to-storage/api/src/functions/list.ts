@@ -14,11 +14,10 @@ export async function getFilesInContainer(
 
   try {
     if (
-      !process.env?.Azure_Storage_AccountName ||
-      !process.env?.Azure_Storage_AccountKey
+      !process.env?.Azure_Storage_AccountName
     ) {
       return {
-        status: 405,
+        status: 400,
         jsonBody: 'Missing required app configuration'
       };
     }
@@ -28,14 +27,21 @@ export async function getFilesInContainer(
 
     if (!containerName) {
       return {
-        status: 405,
+        status: 400,
         jsonBody: 'Missing required container name'
       };
     }
 
+    // Basic validation: only allow 'upload' container for this demo
+    if (containerName !== 'upload') {
+        return {
+            status: 403,
+            jsonBody: 'Forbidden: only "upload" container is allowed'
+        };
+    }
+
     const { error, errorMessage, data } = await listFilesInContainer(
       process.env?.Azure_Storage_AccountName as string,
-      process.env?.Azure_Storage_AccountKey as string,
       containerName
     );
     context.log(errorMessage);
@@ -47,19 +53,20 @@ export async function getFilesInContainer(
     } else {
       return {
         status: 500,
-        jsonBody: errorMessage
+        jsonBody: 'Error listing files'
       };
     }
   } catch (error) {
+    context.error(`Error listing files: ${error}`);
     return {
       status: 500,
-      jsonBody: error
+      jsonBody: 'Internal Server Error'
     };
   }
 }
 
 app.http('list', {
   methods: ['POST', 'GET'],
-  authLevel: 'anonymous',
+  authLevel: 'function',
   handler: getFilesInContainer
 });

@@ -10,12 +10,15 @@
     "test": "echo \"No tests yet...\""
   },
   "dependencies": {
-    "@azure/functions": "4.0.0-alpha.9"
+    "@azure/functions": "^4.11.2"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   },
   "devDependencies": {
     "azure-functions-core-tools": "4.0.5095",
-    "@types/node": "^18.x",
-    "typescript": "^4.0.0"
+    "@types/node": "^22.13.4",
+    "typescript": "^5.7.3"
   },
   "main": "dist/src/functions/*.js"
 }

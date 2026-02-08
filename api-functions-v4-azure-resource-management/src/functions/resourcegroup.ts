@@ -34,13 +34,13 @@ export async function resourcegroup(
   context: InvocationContext
 ): Promise<HttpResponseInit> {
   try {
-    console.log(JSON.stringify(request.query));
-    console.log(JSON.stringify(request.params));
+    context.log(JSON.stringify(request.query));
+    context.log(JSON.stringify(request.params));
 
-    const name: string = request.query.get('name');
-    const location: string = request.query.get('location');
-    console.log(`name: ${name}`);
-    console.log(`location: ${location}`);
+    const name = request.query.get('name');
+    const location = request.query.get('location');
+    context.log(`name: ${name}`);
+    context.log(`location: ${location}`);
 
     switch (request.method) {
       case 'POST': // wait for create to complete before returning
@@ -51,11 +51,10 @@ export async function resourcegroup(
         if (request.headers.get('content-type') === 'application/json') {
           // create with tags
 
-          const body: Record<string, unknown> =
-            (await request.json()) as Record<string, string>;
-          const tags: Record<string, string> = body?.tags
-            ? (body?.tags as Record<string, string>)
-            : null;
+          const body = (await request.json()) as {
+            tags?: Record<string, string>;
+          };
+          const tags: Record<string, string> = body?.tags ?? {};
           const resourceGroup: ResourceGroup = await createResourceGroup(
             name,
             location,
@@ -68,7 +67,7 @@ export async function resourcegroup(
           const resourceGroup: ResourceGroup = await createResourceGroup(
             name,
             location,
-            null
+            {}
           );
           return { jsonBody: resourceGroup, status: 200 };
         }
@@ -79,6 +78,8 @@ export async function resourcegroup(
         }
         await deleteResourceGroup(name);
         return { status: 204 };
+      default:
+        return { status: 405 };
     }
   } catch (err: unknown) {
     return processError(err);

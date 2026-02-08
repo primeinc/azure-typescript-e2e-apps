@@ -17,7 +17,8 @@ import {
   InvocationContext
 } from '@azure/functions';
 import {
-  listResourceByResourceGroup, listResourceBySubscription
+  listResourceByResourceGroup,
+  listResourceBySubscription
 } from '../lib/azure-resource';
 import { processError } from '../lib/error';
 
@@ -26,13 +27,12 @@ export async function resources(
   context: InvocationContext
 ): Promise<HttpResponseInit> {
   try {
-    const resourceGroupName: string = request.query.get('resourceGroupName');
+    const resourceGroupName = request.query.get('resourceGroupName');
     context.log(`resourceGroupName: '${resourceGroupName}'`);
 
     if (resourceGroupName) {
-      const resourcesByName = await listResourceByResourceGroup(
-        resourceGroupName
-      );
+      const resourcesByName =
+        await listResourceByResourceGroup(resourceGroupName);
       return { jsonBody: resourcesByName };
     } else {
       const resourcesBySubscription = await listResourceBySubscription();
