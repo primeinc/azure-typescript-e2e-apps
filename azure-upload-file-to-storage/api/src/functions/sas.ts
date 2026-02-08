@@ -14,18 +14,17 @@ export async function getGenerateSasToken(
 
   try {
     if (
-      !process.env?.Azure_Storage_AccountName ||
-      !process.env?.Azure_Storage_AccountKey
+      !process.env?.Azure_Storage_AccountName
     ) {
       return {
-        status: 405,
+        status: 400,
         jsonBody: 'Missing required app configuration'
       };
     }
 
-    const containerName = request.query.get('container') || 'anonymous';
+    const containerName = request.query.get('container') || 'upload';
     const fileName = request.query.get('file') || 'nonamefile';
-    const permissions = request.query.get('permission') || 'w';
+    const permissions = request.query.get('permission') || 'r';
     const timerange = parseInt(request.query.get('timerange') || '10'); // 10 minutes
 
     context.log(`containerName: ${containerName}`);
@@ -33,12 +32,20 @@ export async function getGenerateSasToken(
     context.log(`permissions: ${permissions}`);
     context.log(`timerange: ${timerange}`);
 
+    // Basic validation: only allow 'upload' container for this demo
+    if (containerName !== 'upload') {
+        return {
+            status: 403,
+            jsonBody: 'Forbidden: only "upload" container is allowed'
+        };
+    }
+
     const url = await generateSASUrl(
       process.env?.Azure_Storage_AccountName,
-      process.env?.Azure_Storage_AccountKey,
       containerName,
       fileName,
-      permissions
+      permissions,
+      timerange
     );
 
     return {
@@ -47,15 +54,16 @@ export async function getGenerateSasToken(
       }
     };
   } catch (error) {
+    context.error(`Error generating SAS token: ${error}`);
     return {
       status: 500,
-      jsonBody: error
+      jsonBody: 'Internal Server Error'
     };
   }
 }
 
 app.http('sas', {
   methods: ['POST', 'GET'],
-  authLevel: 'anonymous',
+  authLevel: 'function',
   handler: getGenerateSasToken
 });

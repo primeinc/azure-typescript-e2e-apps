@@ -9,7 +9,7 @@
       "apiLocation": "api-inmemory",
       "apiBuildCommand": "npm run build --if-present",
       "apiLanguage": "Node",
-      "apiVersion": "18"
+      "apiVersion": "22"
     }
   }
 }

@@ -14,8 +14,7 @@
     "install:swa": "npm install -g @azure/static-web-apps-cli"
   },
   "devDependencies": {},
-  "workspaces": [
-    "lib-openai/",
-    "cli-openai/"
-  ]
+  "engines": {
+    "node": ">=22.0.0"
+  }
 }

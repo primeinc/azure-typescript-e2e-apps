@@ -1,6 +1,6 @@
 import { BlockBlobClient } from '@azure/storage-blob';
 import { Box, Button, Card, CardMedia, Grid, Typography } from '@mui/material';
-import { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useState, useActionState } from 'react';
 import ErrorBoundary from './components/error-boundary';
 import { convertFileToArrayBuffer } from './lib/convert-file-to-arraybuffer';
 
@@ -19,8 +19,6 @@ type ListResponse = {
 function App() {
   const containerName = `upload`;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [sasTokenUrl, setSasTokenUrl] = useState<string>('');
-  const [uploadStatus, setUploadStatus] = useState<string>('');
   const [list, setList] = useState<string[]>([]);
 
   const handleFileSelection = (event: ChangeEvent<HTMLInputElement>) => {
@@ -35,87 +33,77 @@ function App() {
       return;
 
     setSelectedFile(target?.files[0]);
-
-    // reset
-    setSasTokenUrl('');
-    setUploadStatus('');
   };
 
-  const handleFileSasToken = () => {
-    const permission = 'w'; //write
-    const timerange = 5; //minutes
+  const [sasTokenUrl, getSasAction, isSasPending] = useActionState(
+    async (_previousState: string, _formData: FormData) => {
+      const permission = 'w'; //write
+      const timerange = 5; //minutes
 
-    if (!selectedFile) return;
+      if (!selectedFile) return '';
 
-    const url = `${API_SERVER}/api/sas?file=${encodeURIComponent(
-      selectedFile.name
-    )}&permission=${permission}&container=${containerName}&timerange=${timerange}`;
+      const url = `${API_SERVER}/api/sas?file=${encodeURIComponent(
+        selectedFile.name
+      )}&permission=${permission}&container=${containerName}&timerange=${timerange}`;
 
-    fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
-      .then((response) => {
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
         if (!response.ok) {
           throw new Error(`Error: ${response.status} ${response.statusText} - URL: ${url}`);
         }
-        return response.json();
-      })
-      .then((data: SasResponse) => {
-        const { url } = data;
-        setSasTokenUrl(url);
-      })
-      .catch((error: unknown) => {
+        const data: SasResponse = await response.json();
+        return data.url;
+      } catch (error: unknown) {
         if (error instanceof Error) {
-          const { message, stack } = error;
-          setSasTokenUrl(`Error getting sas token: ${message} ${stack || ''}`);
-        } else {
-          setUploadStatus(String(error));
+          return `Error getting sas token: ${error.message}`;
         }
-      });
-  };
+        return String(error);
+      }
+    },
+    ''
+  );
 
-  const handleFileUpload = () => {
-    if (sasTokenUrl === '') return;
+  const [uploadStatus, uploadAction, isUploadPending] = useActionState(
+    async (_previousState: string, _formData: FormData) => {
+      if (sasTokenUrl === '' || sasTokenUrl.startsWith('Error')) return '';
 
-    convertFileToArrayBuffer(selectedFile as File)
-      .then((fileArrayBuffer) => {
+      try {
+        const fileArrayBuffer = await convertFileToArrayBuffer(selectedFile as File);
+        
         if (
           fileArrayBuffer === null ||
           fileArrayBuffer.byteLength < 1 ||
           fileArrayBuffer.byteLength > 256000
-        )
-          return;
+        ) {
+          throw new Error('File is too large or empty');
+        }
 
         const blockBlobClient = new BlockBlobClient(sasTokenUrl);
-        return blockBlobClient.uploadData(fileArrayBuffer);
-      })
-      .then(() => {
-        setUploadStatus('Successfully finished upload');
-        return fetch(`${API_SERVER}/api/list?container=${containerName}`);
-      })
-      .then((response) => {
+        await blockBlobClient.uploadData(fileArrayBuffer);
+
+        const response = await fetch(`${API_SERVER}/api/list?container=${containerName}`);
         if (!response.ok) {
           throw new Error(`Error: ${response.status} ${response.statusText} - URL: ${response.url}`);
         }
-        return response.json();
-      })
-      .then((data: ListResponse) => {
+        const data: ListResponse = await response.json();
         setList(data.list);
-      })
-      .catch((error: unknown) => {
+
+        return 'Successfully finished upload';
+      } catch (error: unknown) {
         if (error instanceof Error) {
-          const { message, stack } = error;
-          setUploadStatus(
-            `Failed to finish upload with error : ${message} ${stack || ''}`
-          );
-        } else {
-          setUploadStatus(error as string);
+          return `Failed to finish upload with error : ${error.message}`;
         }
-      });
-  };
+        return String(error);
+      }
+    },
+    ''
+  );
 
   return (
     <>
@@ -160,19 +148,23 @@ function App() {
               flexDirection="column"
               my={4}
             >
-              <Button variant="contained" onClick={handleFileSasToken}>
-                Get SAS Token
-              </Button>
+              <form action={getSasAction}>
+                <Button variant="contained" type="submit" disabled={isSasPending}>
+                  {isSasPending ? 'Getting Token...' : 'Get SAS Token'}
+                </Button>
+              </form>
               {sasTokenUrl && (
                 <Box my={2}>
-                  <Typography variant="body2">{sasTokenUrl}</Typography>
+                  <Typography variant="body2" color="success.main">
+                    {sasTokenUrl.startsWith('Error') ? sasTokenUrl : 'SAS Token acquired successfully'}
+                  </Typography>
                 </Box>
               )}
             </Box>
           )}
 
           {/* File Upload Section */}
-          {sasTokenUrl && (
+          {sasTokenUrl && !sasTokenUrl.startsWith('Error') && (
             <Box
               display="block"
               justifyContent="left"
@@ -180,9 +172,11 @@ function App() {
               flexDirection="column"
               my={4}
             >
-              <Button variant="contained" onClick={handleFileUpload}>
-                Upload
-              </Button>
+              <form action={uploadAction}>
+                <Button variant="contained" type="submit" disabled={isUploadPending}>
+                  {isUploadPending ? 'Uploading...' : 'Upload'}
+                </Button>
+              </form>
               {uploadStatus && (
                 <Box my={2}>
                   <Typography variant="body2" gutterBottom>
@@ -195,22 +189,27 @@ function App() {
 
           {/* Uploaded Files Display */}
           <Grid container spacing={2}>
-            {list.map((item) => (
-              <Grid item xs={6} sm={4} md={3} key={item}>
-                <Card>
-                  {item.endsWith('.jpg') ||
-                  item.endsWith('.png') ||
-                  item.endsWith('.jpeg') ||
-                  item.endsWith('.gif') ? (
-                    <CardMedia component="img" image={item} alt={item} />
-                  ) : (
-                    <Typography variant="body1" gutterBottom>
-                      {item}
-                    </Typography>
-                  )}
-                </Card>
-              </Grid>
-            ))}
+            {list.map((item) => {
+              const url = new URL(item);
+              const fileName = decodeURIComponent(url.pathname.split('/').pop() || '');
+              
+              return (
+                <Grid size={{ xs: 6, sm: 4, md: 3 }} key={item}>
+                  <Card>
+                    {item.toLowerCase().endsWith('.jpg') ||
+                    item.toLowerCase().endsWith('.png') ||
+                    item.toLowerCase().endsWith('.jpeg') ||
+                    item.toLowerCase().endsWith('.gif') ? (
+                      <CardMedia component="img" image={item} alt={fileName} />
+                    ) : (
+                      <Typography variant="body1" gutterBottom sx={{ p: 1, wordBreak: 'break-all' }}>
+                        {fileName}
+                      </Typography>
+                    )}
+                  </Card>
+                </Grid>
+              );
+            })}
           </Grid>
         </Box>
       </ErrorBoundary>
@@ -219,3 +218,4 @@ function App() {
 }
 
 export default App;
+

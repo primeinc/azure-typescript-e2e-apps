@@ -1,34 +1,43 @@
-/* eslint-disable */
-// @ts-nocheck
-import React, { useState, useEffect } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 
-const ErrorBoundary = ({ children }: any) => {
-  const [hasError, setHasError] = useState(false);
-  const [error, setError] = useState<any>(null);
+interface Props {
+  children: ReactNode;
+}
 
-  useEffect(() => {
-    const errorHandler = (error: any, errorInfo: any) => {
-      console.error('Error caught by ErrorBoundary:', error, errorInfo);
-      setHasError(true);
-      setError(error);
-    };
+interface State {
+  hasError: boolean;
+  error: Error | null;
+}
 
-    window.addEventListener('error', errorHandler);
-    return () => {
-      window.removeEventListener('error', errorHandler);
-    };
-  }, []);
+class ErrorBoundary extends Component<Props, State> {
+  public state: State = {
+    hasError: false,
+    error: null
+  };
 
-  if (hasError) {
-    return (
-      <>
-        <h1>Something went wrong.</h1>
-        <div>{JSON.stringify(error)}</div>
-      </>
-    );
+  public static getDerivedStateFromError(error: Error): State {
+    // Update state so the next render will show the fallback UI.
+    return { hasError: true, error };
   }
 
-  return children;
-};
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Uncaught error:', error, errorInfo);
+  }
+
+  public render() {
+    if (this.state.hasError) {
+      return (
+        <>
+          <h1>Something went wrong.</h1>
+          <details style={{ whiteSpace: 'pre-wrap' }}>
+            {this.state.error && this.state.error.toString()}
+          </details>
+        </>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 export default ErrorBoundary;

@@ -25,11 +25,11 @@ write_files:
       }
 runcmd:
   # install Node.js
-  - 'curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -'
+  - 'curl -sL https://deb.nodesource.com/setup_22.x | sudo -E bash -'
   - 'sudo apt-get install -y nodejs'
   # clone GitHub Repo into myapp directory
   - 'cd /home/azureuser'
-  - git clone "https://github.com/Azure-Samples/js-e2e-vm" myapp
+  - git clone "https://github.com/Azure-Samples/azure-typescript-e2e-apps" myapp
   # Start app
   - 'cd myapp && npm install && npm start'
   # restart NGINX

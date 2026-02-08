@@ -10,7 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@azure/identity": "^4.3.0",
+    "@azure/identity": "^4.13.0",
     "@azure/service-bus": "^7.9.5",
     "dotenv": "^16.4.5"
   },
@@ -25,5 +25,8 @@
   },
   "prettier": {
     "printWidth": 80
+  },
+  "engines": {
+    "node": ">=22.0.0"
   }
 }

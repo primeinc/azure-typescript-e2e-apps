@@ -1,206 +1,102 @@
 version: 2
 updates:
-  - package-ecosystem: npm
-    directory: /api-expressjs-openapi-azuresql-js
+  - package-ecosystem: "npm"
+    directory: "/"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api-expressjs-openapi-azuresql
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/api-expressjs-vm"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api-expressjs-openapi-inmemory
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/api-functions-v4-azure-resource-management"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api-expressjs-vm
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/api-inmemory"
     schedule:
-      interval: daily
-
-  - package-ecosystem: docker
-    directory: /api-function-v4-mongodb-mongo/.devcontainer
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/app-react-vite"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api-function-v4-mongodb-mongo
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/azure-upload-file-to-storage/api"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api-functions-v3-js
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/azure-upload-file-to-storage/app"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api-functions-v3-mongoose
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/quickstarts/ai-agents/ts"
     schedule:
-      interval: daily
-
-  - package-ecosystem: docker
-    directory: /api-functions-v3-upload-file/.devcontainer
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/quickstarts/ai-agents/js"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api-functions-v3-upload-file
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/quickstarts/ai-search"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api-functions-v3
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/quickstarts/azure-openai-assistants/ts"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api-functions-v4-azure-resource-management
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/quickstarts/azure-openai-assistants/js"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api-functions-v4-cosmos-db-no-sql
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/quickstarts/azure-sql/connect-and-query/ts"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api-functions-v4-js
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/quickstarts/azure-sql/connect-and-query/js"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api-functions-v4-mongoose
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/quickstarts/key-vault"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api-functions-v4-triggers
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/quickstarts/openai"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api-functions-v4-typescript-original
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/quickstarts/service-bus/ts"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api-functions-v4-upload-file-by-trigger
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/quickstarts/storage"
     schedule:
-      interval: daily
-
-  - package-ecosystem: docker
-    directory: /api-functions-v4-upload-file/.devcontainer
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/sdk/chained-credentials"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api-functions-v4-upload-file
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/test-api-functions-v4"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api-functions-v4
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/ts-boilerplate-common"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api-inmemory
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/ts-boilerplate-esm"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /api
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/scripts"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /app-react-vite-openai-chat
+      interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "/.devcontainer"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /app-react-vite
+      interval: "weekly"
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /azure-upload-file-to-storage/api
-    schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /azure-upload-file-to-storage/app
-    schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /cli-openai
-    schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /e2e-expressjs-default
-    schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /lib-azure-sql
-    schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /lib-openai
-    schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /lib-storage
-    schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /lib-util
-    schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /lib
-    schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /
-    schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /quickstarts/azure-openai-assistants/js
-    schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /quickstarts/azure-openai-assistants/ts
-    schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /quickstarts/service-bus/ts
-    schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /scripts
-    schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /sdk-azure-openai
-    schedule:
-      interval: daily
-
-  - package-ecosystem: npm
-    directory: /test-api-functions-v4
-    schedule:
-      interval: daily
+      interval: "weekly"

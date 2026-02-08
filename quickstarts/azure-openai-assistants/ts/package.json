@@ -13,13 +13,16 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@azure/identity": "^4.0.1",
-    "openai": "^4.42.0",
+    "@azure/identity": "^4.13.0",
+    "openai": "^6.18.0",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "@types/node": "^20.12.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   }
 }

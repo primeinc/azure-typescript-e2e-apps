@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useActionState, useRef, use, Suspense, useState, useMemo } from 'react';
 import NavBar from './Components/NavBar';
 import Status from './Components/Status';
+import { User, Todo } from './types';
 import './App.css';
 
 let url = `/api/todo`;
@@ -8,10 +9,7 @@ let url = `/api/todo`;
 const cloudEnv = import.meta.env.VITE_CLOUD_ENV || `production`;
 const backendEnv = import.meta.env.VITE_BACKEND_URI || `https://localhost:7071`;
 
-console.log(`CLOUD_ENV = ${cloudEnv}`)
-console.log(`BACKEND_URI = ${backendEnv}`)
-
-if (cloudEnv.toLowerCase()=='production') {
+if (cloudEnv.toLowerCase() === 'production') {
   if (backendEnv) {
     url = `${backendEnv}${url}`
   } else {
@@ -19,99 +17,93 @@ if (cloudEnv.toLowerCase()=='production') {
   }
 }
 
-console.log(`URL = ${url}`)
-
+// Note: In a real production app, you might want to use a more robust
+// caching or state management library (like TanStack Query).
 function App() {
+  const authPromise = useRef(fetch('/.auth/me').then(res => {
+    if (!res.ok) throw new Error(`Auth fetch failed: ${res.status}`);
+    return res.json();
+  }).then(payload => payload.clientPrincipal as User | null)).current;
+  
+  const todoPromise = useRef(fetch(url).then(res => {
+    if (!res.ok) throw new Error(`Todo fetch failed: ${res.status}`);
+    return res.json();
+  }) as Promise<Record<string, Todo>>).current;
 
-  // auth
-  const [isAuthenticated, userHasAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
-  const [userName, setUserName] = useState('');
-  const mountFlagAuth = useRef(false)
+  return (
+    <Suspense fallback={<div className="App-header">Loading app data...</div>}>
+      <AppContent todosPromise={todoPromise} authPromise={authPromise} />
+    </Suspense>
+  );
+}
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!mountFlagAuth.current) {
-        const response = await fetch('/.auth/me');
-        const payload = await response.json();
-        const { clientPrincipal } = payload;
+function AppContent({ todosPromise, authPromise }: { todosPromise: Promise<Record<string, Todo>>, authPromise: Promise<User | null> }) {
+  const user = use(authPromise);
+  const initialTodos = use(todosPromise);
+  const [todos, setTodos] = useState(initialTodos);
+  
+  const isAuthenticated = !!user;
+  const userName = user?.userDetails ? user.userDetails.toLowerCase().split(' ').map((x: string) => x && x[0] ? x[0].toUpperCase() + x.slice(1) : '').join(' ') : '';
 
-        if (clientPrincipal) {
-          setUser(clientPrincipal);
-          userHasAuthenticated(true);
-          setUserName(clientPrincipal?.userDetails.toLowerCase().split(' ').map(x => x[0].toUpperCase() + x.slice(1)).join(' '))
-          console.log(`clientPrincipal = ${JSON.stringify(clientPrincipal)}`);
-        }
+  const statusPromise = useMemo(() => {
+    if (!isAuthenticated) return Promise.resolve(null);
+    
+    let statusUrl = `/api/status`;
+    if (cloudEnv.toLowerCase() === 'production' && backendEnv) {
+        statusUrl = `${backendEnv}${statusUrl}`;
+    }
+    
+    return fetch(statusUrl).then(res => {
+        if (!res.ok) throw new Error(`Status fetch failed: ${res.status}`);
+        return res.json();
+    });
+  }, [isAuthenticated]);
+
+  const [message, submitAction, isPending] = useActionState(
+    async (_previousState: string, formData: FormData) => {
+      const title = formData.get('title') as string;
+      if (!title) return 'Please enter a todo';
+
+      try {
+        const config = {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title })
+        };
+        const response = await fetch(url, config);
+        if (!response.ok) throw new Error(`Post failed: ${response.status}`);
+        const returnedName = await response.text();
+
+        // Update local state to fix P0 #5
+        setTodos(prev => ({ ...prev, [Date.now()]: { title, completed: false } }));
+
+        return returnedName || 'Todo added';
+      } catch (error) {
+        return `Error: ${error instanceof Error ? error.message : String(error)}`;
       }
-    }
-
-    fetchData();
-  }, []);
-
-  // data
-  const [todos, setTodos] = useState({});
-  const [title, setTitle] = useState('');
-  const [message, setMessage] = useState('');
-  const mountFlagData = useRef(false)
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!mountFlagData.current) {
-        mountFlagData.current = true;
-        console.log(url)
-
-        const data = await fetch(url);
-        const json = await data.json();
-        setTodos(json);
-      }
-    }
-
-    fetchData();
-  }, []);
-
-  const sendDataToApi = async (e: any) => {
-    e.preventDefault();
-
-    const config = {
-      method: "POST",
-      headers: { "Content-Test": "application/json" },
-      body: JSON.stringify({ title })
-    };
-    const data = await fetch(url, config);
-    const returnedName = await data.text();
-
-    if (returnedName) {
-      setMessage(returnedName);
-    } else {
-      setMessage(`Couldn't send data`);
-    }
-
-    const userResponse = await fetch(url, { method: "GET" });
-    const dataReturned = await userResponse.json();
-
-    if (dataReturned) {
-      setTitle('')
-      setTodos(dataReturned);
-    }
-  };
+    },
+    ''
+  );
 
   return (
     <div className="App">
       <NavBar user={user} />
       <header className="App-header">
-        <form id="form1" className="App-form" onSubmit={e => sendDataToApi(e)}>
+        <form action={submitAction} className="App-form">
           <div>
             <input
               type="text"
-              id="name"
+              name="title"
               className="App-input"
               placeholder="Enter todo to add"
-              value={title}
-              onChange={e => setTitle(e.target.value)} />
-            <button type="submit" className="App-button">Submit</button>
+              required
+            />
+            <button type="submit" className="App-button" disabled={isPending}>
+              {isPending ? 'Adding...' : 'Submit'}
+            </button>
           </div>
         </form>
-        <div><h5>Todo added: {message} </h5></div>
+        <div><h5>{message && `Todo added: ${message}`}</h5></div>
 
         <details>
           <summary>Public data</summary>
@@ -122,17 +114,17 @@ function App() {
           <div>
             <details>
               <summary>Private data - just for {userName}</summary>
-              <p>
-                <h5>Auth: {isAuthenticated}</h5>
-                <p><Status user={user} /></p>
-              </p>
+              <div style={{ padding: '10px' }}>
+                <h5>Auth: {String(isAuthenticated)}</h5>
+                <Suspense fallback={<p>Loading status...</p>}>
+                  <Status user={user} statusPromise={statusPromise} />
+                </Suspense>
+              </div>
             </details>
             <p>{JSON.stringify(user)}</p>
           </div>
           : <div>Sign in for private data access</div>
         }
-
-
       </header>
     </div>
   );

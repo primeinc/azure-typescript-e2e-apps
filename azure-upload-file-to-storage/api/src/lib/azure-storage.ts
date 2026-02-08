@@ -4,17 +4,15 @@ import {
   BlobServiceClient,
   ContainerClient,
   SASProtocol,
-  StorageSharedKeyCredential
+  UserDelegationKey,
+  generateBlobSASQueryParameters
 } from '@azure/storage-blob';
+import { DefaultAzureCredential } from '@azure/identity';
 
-function getBlobServiceClient(serviceName, serviceKey) {
-  const sharedKeyCredential = new StorageSharedKeyCredential(
-    serviceName,
-    serviceKey
-  );
+function getBlobServiceClient(serviceName: string): BlobServiceClient {
   const blobServiceClient = new BlobServiceClient(
     `https://${serviceName}.blob.core.windows.net`,
-    sharedKeyCredential
+    new DefaultAzureCredential()
   );
 
   return blobServiceClient;
@@ -30,18 +28,49 @@ async function createContainer(
   return containerClient;
 }
 
+// Simple cache for User Delegation Key
+let cachedUserDelegationKey: {
+    key: UserDelegationKey;
+    expiresOn: Date;
+} | null = null;
+
+async function getCachedUserDelegationKey(blobServiceClient: BlobServiceClient): Promise<UserDelegationKey> {
+    const now = new Date();
+    // If we have a cached key and it's still valid for at least 5 minutes, use it
+    if (cachedUserDelegationKey && cachedUserDelegationKey.expiresOn.getTime() > now.getTime() + 5 * 60 * 1000) {
+        return cachedUserDelegationKey.key;
+    }
+
+    const startsOn = new Date();
+    startsOn.setMinutes(startsOn.getMinutes() - 15);
+
+    const expiresOn = new Date();
+    expiresOn.setHours(expiresOn.getHours() + 1); // Key valid for 1 hour
+
+    const userDelegationKey = await blobServiceClient.getUserDelegationKey(
+        startsOn,
+        expiresOn
+    );
+
+    cachedUserDelegationKey = {
+        key: userDelegationKey,
+        expiresOn
+    };
+
+    return userDelegationKey;
+}
+
 export async function uploadBlob(
   serviceName: string,
-  serviceKey: string,
   fileName: string,
   containerName: string,
   blob: Buffer
-): Promise<string> {
-  if (!serviceName || !serviceKey || !fileName || !containerName || !blob) {
-    return 'Upload function missing parameters';
+): Promise<string | undefined> {
+  if (!serviceName || !fileName || !containerName || !blob) {
+    throw new Error('Upload function missing parameters');
   }
 
-  const blobServiceClient = getBlobServiceClient(serviceName, serviceKey);
+  const blobServiceClient = getBlobServiceClient(serviceName);
 
   const containerClient = await createContainer(
     containerName,
@@ -55,36 +84,46 @@ export async function uploadBlob(
 
 export const generateSASUrl = async (
   serviceName: string,
-  serviceKey: string,
   containerName: string,
   fileName: string, // hierarchy of folders and file name: 'folder1/folder2/filename.ext'
   permissions = 'r', // default read only
   timerange = 1 // default 1 minute
 ): Promise<string> => {
-  if (!serviceName || !serviceKey || !fileName || !containerName) {
-    return 'Generate SAS function missing parameters';
+  if (!serviceName || !fileName || !containerName) {
+    throw new Error('Generate SAS function missing parameters');
   }
 
-  const blobServiceClient = getBlobServiceClient(serviceName, serviceKey);
+  const blobServiceClient = getBlobServiceClient(serviceName);
   const containerClient = await createContainer(
     containerName,
     blobServiceClient
   );
   const blockBlobClient = await containerClient.getBlockBlobClient(fileName);
 
-  // Best practice: create time limits
-  const SIXTY_MINUTES = timerange * 60 * 1000;
-  const NOW = new Date();
+  // Best practice: start SAS 15 minutes in the past to avoid clock skew
+  const startsOn = new Date();
+  startsOn.setMinutes(startsOn.getMinutes() - 15);
 
-  // Create SAS URL
-  const accountSasTokenUrl = await blockBlobClient.generateSasUrl({
-    startsOn: NOW,
-    expiresOn: new Date(new Date().valueOf() + SIXTY_MINUTES),
-    permissions: BlobSASPermissions.parse(permissions), // Read only permission to the blob
-    protocol: SASProtocol.Https // Only allow HTTPS access to the blob
-  });
+  const expiresOn = new Date();
+  expiresOn.setMinutes(expiresOn.getMinutes() + timerange);
 
-  return accountSasTokenUrl;
+  const userDelegationKey = await getCachedUserDelegationKey(blobServiceClient);
+
+  // Create SAS token
+  const sasToken = generateBlobSASQueryParameters(
+    {
+      containerName,
+      blobName: fileName,
+      permissions: BlobSASPermissions.parse(permissions),
+      startsOn,
+      expiresOn,
+      protocol: SASProtocol.Https
+    },
+    userDelegationKey,
+    serviceName
+  ).toString();
+
+  return `${blockBlobClient.url}?${sasToken}`;
 };
 
 type ListFilesInContainerResponse = {
@@ -95,10 +134,9 @@ type ListFilesInContainerResponse = {
 
 export const listFilesInContainer = async (
   serviceName: string,
-  serviceKey: string,
   containerName: string
 ): Promise<ListFilesInContainerResponse> => {
-  if (!serviceName || !serviceKey || !containerName) {
+  if (!serviceName || !containerName) {
     return {
       error: true,
       errorMessage: 'List files in container function missing parameters',
@@ -106,16 +144,42 @@ export const listFilesInContainer = async (
     };
   }
 
-  const blobServiceClient = getBlobServiceClient(serviceName, serviceKey);
+  const blobServiceClient = getBlobServiceClient(serviceName);
   const containerClient = blobServiceClient.getContainerClient(containerName);
+
+  // Best practice: start SAS 15 minutes in the past to avoid clock skew
+  const startsOn = new Date();
+  startsOn.setMinutes(startsOn.getMinutes() - 15);
+
+  const expiresOn = new Date();
+  expiresOn.setMinutes(expiresOn.getMinutes() + 60); // Read-only list tokens last 60 mins
+
+  const userDelegationKey = await getCachedUserDelegationKey(blobServiceClient);
 
   const data = [];
 
-  for await (const response of containerClient
-    .listBlobsFlat()
-    .byPage({ maxPageSize: 20 })) {
-    for (const blob of response.segment.blobItems) {
-      data.push(`${containerClient.url}/${blob.name}`);
+  // Implement pagination and limit to 20 results (P2 #13)
+  const listBlobsResponse = containerClient.listBlobsFlat().byPage({ maxPageSize: 20 });
+  const firstPage = await listBlobsResponse.next();
+  
+  if (firstPage.value && firstPage.value.segment.blobItems) {
+    for (const blob of firstPage.value.segment.blobItems) {
+        const blockBlobClient = containerClient.getBlockBlobClient(blob.name);
+        
+        const sasToken = generateBlobSASQueryParameters(
+        {
+            containerName,
+            blobName: blob.name,
+            permissions: BlobSASPermissions.parse('r'),
+            startsOn,
+            expiresOn,
+            protocol: SASProtocol.Https
+        },
+        userDelegationKey,
+        serviceName
+        ).toString();
+
+        data.push(`${blockBlobClient.url}?${sasToken}`);
     }
   }
 
