@@ -92,6 +92,28 @@ React 19 is largely backward compatible, but here are the key changes:
 
 ## Migration Steps
 
+### Automated Migration Tools
+
+This upgrade used the following automated migration tools to ensure correctness:
+
+1. **types-react-codemod**: Automated React 19 type migrations
+   ```bash
+   npx types-react-codemod@latest preset-19 src/ --yes
+   ```
+
+2. **@mui/codemod**: Automated Material-UI v7 Grid API updates
+   ```bash
+   npx @mui/codemod@latest v7.0.0/grid-props src/
+   ```
+
+3. **npm-check-updates**: Automated dependency version updates
+   ```bash
+   npx npm-check-updates -u
+   npm install
+   ```
+
+These tools were run on all React applications and verified that the code is compatible with React 19 and MUI v7.
+
 ### For New Projects
 
 If you're creating a new project based on this repository:
@@ -102,47 +124,30 @@ If you're creating a new project based on this repository:
 
 ### For Existing Projects
 
-If you have an existing project based on this repository:
+If you have an existing project based on this repository, use these automated tools:
 
-1. **Update package.json** for React dependencies:
-   ```json
-   {
-     "dependencies": {
-       "react": "^19.2.4",
-       "react-dom": "^19.2.4"
-     },
-     "devDependencies": {
-       "@types/react": "^19.2.13",
-       "@types/react-dom": "^19.2.3",
-       "@vitejs/plugin-react": "^5.1.3",
-       "vite": "^7.3.1"
-     }
-   }
-   ```
-
-2. **Update Material-UI** (if applicable):
-   ```json
-   {
-     "dependencies": {
-       "@mui/material": "^7.3.7",
-       "@emotion/react": "^11.14.0",
-       "@emotion/styled": "^11.14.0"
-     }
-   }
-   ```
-
-3. **Update Azure SDKs** to latest versions as shown above
-
-4. **Update Grid components** (MUI v7):
-   - Replace `item` prop (remove it)
-   - Consolidate responsive props: `xs={6}` → `size={{ xs: 6 }}`
-
-5. **Run dependency installation**:
+1. **Update package.json with npm-check-updates**:
    ```bash
+   npx npm-check-updates -u
    npm install
    ```
 
-6. **Build and test**:
+2. **Run React 19 type migrations**:
+   ```bash
+   npx types-react-codemod@latest preset-19 src/ --yes
+   ```
+
+3. **Run MUI v7 Grid migrations** (if using Material-UI):
+   ```bash
+   npx @mui/codemod@latest v7.0.0/grid-props src/
+   ```
+
+4. **Manual updates** (if needed):
+   - Review any Grid components that weren't automatically migrated
+   - Check for deprecated React patterns
+   - Update Azure SDK usage if APIs have changed
+
+5. **Build and test**:
    ```bash
    npm run build
    npm run test
