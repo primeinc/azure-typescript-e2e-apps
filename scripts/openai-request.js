@@ -1,5 +1,3 @@
-import fetch from 'node-fetch';  
-  
 const openAiName = '';                    // resource name
 const openAiDeployment = '';              // deployment name
 const apiVersion = '2023-03-15-preview';
