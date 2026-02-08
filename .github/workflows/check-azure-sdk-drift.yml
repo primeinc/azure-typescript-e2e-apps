@@ -1,0 +1,26 @@
+name: Check Azure SDK Version Drift
+
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Weekly on Mondays
+  workflow_dispatch:
+
+jobs:
+  check-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          
+      - name: Install npm-check-updates
+        run: npm install -g npm-check-updates
+        
+      - name: Check for Azure SDK updates
+        run: |
+          echo "Checking for updates to @azure/* packages across all workspaces..."
+          npx npm-check-updates --workspaces --filter "/@azure\/.*/"
+        continue-on-error: false
