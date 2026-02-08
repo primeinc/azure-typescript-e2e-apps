@@ -5,25 +5,26 @@ import {
   SearchSuggester,
   SearchClient,
   SearchDocumentsResult,
-  AzureKeyCredential,
   odata,
   SearchFieldArray,
   SearchIndex,
 } from "@azure/search-documents";
+import { DefaultAzureCredential } from "@azure/identity";
 import "dotenv/config";
 
 // Import data
 import indexDefinition from "./hotels_quickstart_index.json" with { type: "json" };
 import hotelData from "./hotels.json" with { type: "json" };
 
-// Get endpoint and apiKey from .env file
+// Get endpoint from .env file
 const endpoint: string = process.env.SEARCH_API_ENDPOINT!!;
-const apiKey: string = process.env.SEARCH_API_KEY!!;
-if (!endpoint || !apiKey) {
+if (!endpoint) {
   throw new Error(
-    "Make sure to set valid values for endpoint and apiKey with proper authorization.",
+    "Make sure to set valid value for endpoint in environment variables.",
   );
 }
+
+const credential = new DefaultAzureCredential();
 
 function printSearchIndex(searchIndex: SearchIndex) {
   const { name, etag, defaultScoringProfile } = searchIndex;
@@ -245,14 +246,13 @@ async function main(indexName: string, indexDef: SearchIndex, hotels: Hotel[]) {
   // Create a new SearchIndexClient
   const indexClient = new SearchIndexClient(
     endpoint,
-    new AzureKeyCredential(apiKey),
+    credential,
   );
 
   // Create the index
   await createIndex(indexClient, indexName, indexDef);
 
   const searchClient = indexClient.getSearchClient(indexName);
-  //const searchClient = new SearchClient(endpoint, indexName, new AzureKeyCredential(apiKey));
 
 
   // Load with data
@@ -260,14 +260,6 @@ async function main(indexName: string, indexDef: SearchIndex, hotels: Hotel[]) {
   await loadData(searchClient, hotels);
 
   wait(10000);
-
-  // Search index
-//   await searchAllReturnAllFields(searchClient, "*");
-//   await searchAllSelectReturnedFields(searchClient, "*");
-//   await searchWithFilterOrderByAndSelect(searchClient, "wifi", "FL");
-//   await searchWithLimitedSearchFields(searchClient, "sublime cliff");
-//   await searchWithFacets(searchClient, "*");
-//   await lookupDocumentById(searchClient, "3");
 }
 
 main(indexDefinition?.name, indexDef, hotels).catch((err) => {
