@@ -11,7 +11,7 @@
     "license": "ISC",
     "type": "module",
     "dependencies": {
-      "@azure/identity": "^4.4.1",
-      "@azure/storage-blob": "^12.25.0"
+      "@azure/identity": "^4.13.0",
+      "@azure/storage-blob": "^12.30.0"
     }
   }

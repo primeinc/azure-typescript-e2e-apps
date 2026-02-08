@@ -25,8 +25,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@azure/identity": "^4.4.1",
-    "@azure/openai": "^2.0.0-beta.2",
+    "@azure/identity": "^4.13.0",
+    "@azure/openai": "^2.0.0",
     "dotenv": "^16.4.5",
     "openai": "^4.57.1"
   },
