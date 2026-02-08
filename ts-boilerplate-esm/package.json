@@ -1,5 +1,5 @@
 {
-  "name": "ts-boilerplate-common",
+  "name": "ts-boilerplate-esm",
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",
@@ -15,8 +15,11 @@
     "fastify": "^5.1.0"
   },
   "devDependencies": {
-    "@types/node": "^22.9.1",
-    "prettier": "3.3.3",
-    "typescript": "^5.6.3"
+    "@types/node": "^22.13.4",
+    "prettier": "^3.5.1",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   }
 }
