@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "dotenv": "^16.0.3",
-    "express": "^4.17.21",
+    "express": "^4.22.1",
     "mssql": "^11.0.1",
     "swagger-ui-express": "^5.0.1",
     "yamljs": "^0.3.0"
